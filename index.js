@@ -39,6 +39,13 @@ async function run() {
       const result = await menuCollection.find().toArray();
       res.send(result);
     });
+
+    app.get("/category/:title", async (req, res) => {
+      const title = req.params.title.toLowerCase();
+      const query = { category: title };
+      const result = await menuCollection.find(query).toArray();
+      res.send(result);
+    });
   } finally {
     // await client.close();
   }
