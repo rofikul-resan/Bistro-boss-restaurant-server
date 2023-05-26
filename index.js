@@ -40,6 +40,11 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/reviews", async (req, res) => {
+      const result = await reviewCollection.find().toArray();
+      res.send(result);
+    });
+
     app.get("/category/:title", async (req, res) => {
       const title = req.params.title.toLowerCase();
       const query = { category: title };
