@@ -35,6 +35,7 @@ async function run() {
     const menuCollection = client.db("bistro-Boss").collection("menu");
     const reviewCollection = client.db("bistro-Boss").collection("review");
     const cartsCollection = client.db("bistro-Boss").collection("carts");
+    const usersCollection = client.db("bistro-Boss").collection("users");
 
     app.get("/menu", async (req, res) => {
       const result = await menuCollection.find().toArray();
@@ -50,6 +51,29 @@ async function run() {
       const title = req.params.title.toLowerCase();
       const query = { category: title };
       const result = await menuCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // users section
+
+    app.post("/users", async (req, res) => {
+      const userInfo = req.body;
+      const email = userInfo?.email;
+      const isHaveUser = await usersCollection.findOne({ email: email });
+      if (!isHaveUser) {
+        const result = await usersCollection.insertOne(userInfo);
+        res.send(result);
+      }
+    });
+
+    app.get("/users", async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.delete("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await usersCollection.deleteOne({ _id: new ObjectId(id) });
       res.send(result);
     });
 
@@ -73,7 +97,6 @@ async function run() {
 
     app.delete("/carts/:id", async (req, res) => {
       const id = req.params.id;
-      console.log(id);
       const query = { _id: new ObjectId(id) };
       const result = await cartsCollection.deleteOne(query);
       res.send(result);
