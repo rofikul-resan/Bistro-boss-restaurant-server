@@ -3,6 +3,7 @@ require("dotenv").config();
 const cors = require("cors");
 const port = process.env.PORT || 5000;
 const app = express();
+const jwt = require("jsonwebtoken");
 
 //middleware
 app.use(cors());
@@ -31,6 +32,13 @@ async function run() {
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
+    app.post("/jwt", (req, res) => {
+      const userInfo = req.body;
+      const token = jwt.sign(userInfo, process.env.JWT_SECRET, {
+        expiresIn: "10h",
+      });
+      res.send({ token });
+    });
 
     const menuCollection = client.db("bistro-Boss").collection("menu");
     const reviewCollection = client.db("bistro-Boss").collection("review");
@@ -61,7 +69,10 @@ async function run() {
       const email = userInfo?.email;
       const isHaveUser = await usersCollection.findOne({ email: email });
       if (!isHaveUser) {
-        const result = await usersCollection.insertOne(userInfo);
+        const result = await usersCollection.insertOne({
+          name: userInfo.name,
+          email: userInfo.email,
+        });
         res.send(result);
       }
     });
