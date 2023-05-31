@@ -25,6 +25,25 @@ const client = new MongoClient(uri, {
   },
 });
 
+const verifyJWT = (req, res, next) => {
+  const authorization = req.headers.authorization;
+  if (!authorization) {
+    return res
+      .status(401)
+      .send({ error: true, massage: "unauthorize access no tken" });
+  }
+  const token = authorization.split(" ")[1];
+  jwt.verify(token, process.env.JWT_SECRET, (error, decoded) => {
+    if (error) {
+      return res
+        .status(401)
+        .send({ error: true, message: "unauthorized access wrong token " });
+    }
+    req.decoded = decoded;
+    next();
+  });
+};
+
 async function run() {
   try {
     // Send a ping to confirm a successful connection
@@ -40,6 +59,16 @@ async function run() {
       res.send({ token });
     });
 
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      console.log(email);
+      const user = await usersCollection.findOne({ email: email });
+      if (user.roll === "admin") {
+        next();
+      } else {
+        return res.status(403).send({ admin: false });
+      }
+    };
     const menuCollection = client.db("bistro-Boss").collection("menu");
     const reviewCollection = client.db("bistro-Boss").collection("review");
     const cartsCollection = client.db("bistro-Boss").collection("carts");
@@ -77,6 +106,18 @@ async function run() {
       }
     });
 
+    app.patch("/users/admin/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const doc = {
+        $set: {
+          roll: "admin",
+        },
+      };
+      const result = await usersCollection.updateOne(query, doc);
+      res.send(result);
+    });
+
     app.get("/users", async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
@@ -96,7 +137,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/carts", async (req, res) => {
+    app.get("/carts", verifyJWT, async (req, res) => {
       const email = req.query.email;
       if (!email) {
         res.send([]);
