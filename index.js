@@ -42,11 +42,10 @@ async function run() {
 
     const verifyJWT = (req, res, next) => {
       const authorizeToken = req.headers.authorization;
-      console.log(authorizeToken);
       if (!authorizeToken) {
         return res
           .status(401)
-          .send({ error: true, massage: "unauthorize access no tken" });
+          .send({ error: true, massage: "unauthorize access no token" });
       }
       const token = authorizeToken.split(" ")[1];
       jwt.verify(token, process.env.JWT_SECRET, (error, decoded) => {
@@ -62,8 +61,8 @@ async function run() {
 
     const verifyAdmin = async (req, res, next) => {
       const email = req.decoded.email;
-      console.log(email);
       const user = await usersCollection.findOne({ email: email });
+      console.log(user);
       if (user.roll === "admin") {
         console.log(true);
         next();
@@ -78,6 +77,12 @@ async function run() {
 
     app.get("/menu", async (req, res) => {
       const result = await menuCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.post("/menu", verifyJWT, verifyAdmin, async (req, res) => {
+      const menu = req.body;
+      const result = await menuCollection.insertOne(menu);
       res.send(result);
     });
 
@@ -108,7 +113,7 @@ async function run() {
       }
     });
 
-    app.patch("/users/admin/:id", verifyJWT, async (req, res) => {
+    app.patch("/users/admin/:id", verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const doc = {
@@ -127,7 +132,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/users", async (req, res) => {
+    app.get("/users", verifyJWT, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
