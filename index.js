@@ -76,6 +76,7 @@ async function run() {
     const reviewCollection = client.db("bistro-Boss").collection("review");
     const cartsCollection = client.db("bistro-Boss").collection("carts");
     const usersCollection = client.db("bistro-Boss").collection("users");
+    const paymentCollection = client.db("bistro-Boss").collection("payment");
 
     app.get("/menu", async (req, res) => {
       const result = await menuCollection.find().toArray();
@@ -178,6 +179,12 @@ async function run() {
     });
 
     // payment section
+
+    app.post("/payments", async (req, res) => {
+      const payment = req.body;
+      const result = await paymentCollection.insertOne(payment);
+      res.send(result);
+    });
 
     app.post("/create-payment-intent", verifyJWT, async (req, res) => {
       const { price } = req.body;
