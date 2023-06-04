@@ -180,10 +180,14 @@ async function run() {
 
     // payment section
 
-    app.post("/payments", async (req, res) => {
+    app.post("/payments", verifyJWT, async (req, res) => {
       const payment = req.body;
-      const result = await paymentCollection.insertOne(payment);
-      res.send(result);
+      const query = {
+        _id: { $in: payment.orderItemId.map((id) => new ObjectId(id)) },
+      };
+      const insertResult = await paymentCollection.insertOne(payment);
+      const deleteResult = await cartsCollection.deleteMany(query);
+      res.send({ insertResult, deleteResult });
     });
 
     app.post("/create-payment-intent", verifyJWT, async (req, res) => {
