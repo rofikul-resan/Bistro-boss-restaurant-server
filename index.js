@@ -204,6 +204,21 @@ async function run() {
         clientSecret: paymentIntent.client_secret,
       });
     });
+
+    app.get("/admin-status", async (req, res) => {
+      const totalUser = await usersCollection.estimatedDocumentCount();
+      const totalOrder = await paymentCollection.estimatedDocumentCount();
+      const totalMenu = await menuCollection.estimatedDocumentCount();
+      const orders = await paymentCollection.find().toArray();
+      const revenue = orders.reduce((sum, payment) => sum + payment.amount, 0);
+
+      res.send({
+        totalUser,
+        totalOrder,
+        totalMenu,
+        revenue,
+      });
+    });
   } finally {
     // await client.close();
   }
